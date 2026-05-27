@@ -17,6 +17,7 @@ export default function BookingsPage() {
     try {
       setLoading(true);
       const data = await api.getAllBookings();
+      console.log('Bookings data:', data);
       setBookings(data);
     } catch (error) {
       console.error('Error loading bookings:', error);
@@ -25,12 +26,9 @@ export default function BookingsPage() {
     }
   };
 
-  // Helper function to check if booking is verified
-  const isVerified = (status: any): boolean => {
-    if (typeof status === 'boolean') return status;
-    if (typeof status === 'number') return status === 1;
-    if (typeof status === 'string') return status === 'true' || status === '1';
-    return false;
+  // Format time to remove seconds if needed
+  const formatTime = (time: string) => {
+    return time.substring(0, 5); // Converts "12:23:00" to "12:23"
   };
 
   if (loading) {
@@ -50,7 +48,7 @@ export default function BookingsPage() {
       <div className="max-w-6xl mx-auto p-6">
         <div className="flex justify-between mb-6">
           <h1 className="text-2xl font-bold">Bookings</h1>
-          <Link href="/bookings/create" className="bg-blue-500 text-white px-4 py-2 rounded">
+          <Link href="/bookings/create" className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
             Create Booking
           </Link>
         </div>
@@ -64,32 +62,73 @@ export default function BookingsPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {bookings.map((booking: any) => {
-              const verified = isVerified(booking.status);
-              return (
-                <div key={booking.id} className="bg-white p-4 rounded shadow">
-                  <div className="flex justify-between">
-                    <div>
-                      <h3 className="font-semibold">{booking.bookingFor}</h3>
-                      <p>Hall: {booking.hall?.name || 'N/A'}</p>
-                      <p>Date: {booking.reservedDate} at {booking.startTime}</p>
-                      <p>Participants: {booking.expectedParticipants}</p>
+            {bookings.map((booking: any) => (
+              <div key={booking.id} className="bg-white p-4 rounded shadow hover:shadow-md transition-shadow">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-lg mb-2">{booking.bookingFor}</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
+                      <p>
+                        <span className="text-gray-500">Hall:</span>{' '}
+                        <span className="font-medium">{booking.hall?.name}</span>
+                      </p>
+                      <p>
+                        <span className="text-gray-500">Location:</span>{' '}
+                        <span>{booking.hall?.location}</span>
+                      </p>
+                      <p>
+                        <span className="text-gray-500">Date:</span>{' '}
+                        <span>{booking.reservedDate}</span>
+                      </p>
+                      <p>
+                        <span className="text-gray-500">Time:</span>{' '}
+                        <span>{formatTime(booking.startTime)}</span>
+                        {booking.endTime && booking.endTime !== booking.startTime && 
+                          ` - ${formatTime(booking.endTime)}`
+                        }
+                      </p>
+                      <p>
+                        <span className="text-gray-500">Participants:</span>{' '}
+                        <span>{booking.expectedParticipants}</span>
+                      </p>
+                      <p>
+                        <span className="text-gray-500">Created:</span>{' '}
+                        <span>{new Date(booking.createdAt).toLocaleDateString()}</span>
+                      </p>
                     </div>
-                    <div className="text-right">
-                      <span className={`inline-block px-2 py-1 rounded text-sm ${
-                        verified ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                      }`}>
-                        {verified ? 'Verified' : 'Cancelled'}
-                      </span>
-                      <div className="mt-2">
-                        <Link href={`/bookings/${booking.id}`} className="text-blue-500 text-sm mr-2">View</Link>
-                        <Link href={`/bookings/edit/${booking.id}`} className="text-green-500 text-sm">Edit</Link>
-                      </div>
+                    {booking.specialRequirements && (
+                      <p className="mt-2 text-sm">
+                        <span className="text-gray-500">Requirements:</span>{' '}
+                        <span className="text-gray-600">{booking.specialRequirements}</span>
+                      </p>
+                    )}
+                  </div>
+                  <div className="text-right ml-4">
+                    <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
+                      booking.status === true || booking.status === 1
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-red-100 text-red-800'
+                    }`}>
+                      {booking.status === true || booking.status === 1 ? 'Verified' : 'Cancelled'}
+                    </span>
+                    <div className="mt-3 space-x-2">
+                      <Link 
+                        href={`/bookings/${booking.id}`} 
+                        className="text-blue-500 text-sm hover:text-blue-700"
+                      >
+                        View Details
+                      </Link>
+                      <Link 
+                        href={`/bookings/edit/${booking.id}`} 
+                        className="text-green-500 text-sm hover:text-green-700"
+                      >
+                        Edit
+                      </Link>
                     </div>
                   </div>
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         )}
       </div>

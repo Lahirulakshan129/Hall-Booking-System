@@ -22,6 +22,7 @@ export default function BookingDetailsPage() {
     try {
       setLoading(true);
       const data = await api.getBookingById(id as string);
+      console.log('Booking details:', data);
       setBooking(data);
     } catch (error) {
       console.error('Error fetching booking:', error);
@@ -52,12 +53,9 @@ export default function BookingDetailsPage() {
     }
   };
 
-  // Helper function to check if booking is verified
-  const isVerified = (status: any): boolean => {
-    if (typeof status === 'boolean') return status;
-    if (typeof status === 'number') return status === 1;
-    if (typeof status === 'string') return status === 'true' || status === '1';
-    return false;
+  const formatTime = (time: string) => {
+    if (!time) return 'N/A';
+    return time.substring(0, 5);
   };
 
   if (loading) {
@@ -81,7 +79,7 @@ export default function BookingDetailsPage() {
           </div>
           <button
             onClick={() => router.push('/bookings')}
-            className="mt-4 bg-blue-500 text-white px-4 py-2 rounded"
+            className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
           >
             Back to Bookings
           </button>
@@ -90,64 +88,127 @@ export default function BookingDetailsPage() {
     );
   }
 
-  const verified = isVerified(booking.status);
+  const isVerified = booking.status === true || booking.status === 1;
 
   return (
     <>
       <Navbar />
       <div className="max-w-3xl mx-auto p-6">
-        <div className="bg-white p-6 rounded shadow">
-          <div className="flex justify-between items-start mb-4">
-            <h1 className="text-2xl font-bold">{booking.bookingFor}</h1>
-            <span className={`inline-block px-3 py-1 rounded text-sm font-semibold ${
-              verified ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-            }`}>
-              {verified ? 'Verified' : 'Cancelled'}
-            </span>
+        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+          <div className="p-6">
+            <div className="flex justify-between items-start mb-4">
+              <h1 className="text-2xl font-bold">{booking.bookingFor}</h1>
+              <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
+                isVerified ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+              }`}>
+                {isVerified ? 'Verified' : 'Cancelled'}
+              </span>
+            </div>
+            
+            <div className="border-t pt-4 space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm text-gray-500">Booking ID</label>
+                  <p className="font-mono text-sm">{booking.id}</p>
+                </div>
+                <div>
+                  <label className="text-sm text-gray-500">Created At</label>
+                  <p>{new Date(booking.createdAt).toLocaleString()}</p>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm text-gray-500">Hall</label>
+                <p className="font-semibold">{booking.hall?.name}</p>
+                <p className="text-sm text-gray-600">{booking.hall?.location}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm text-gray-500">Reserved Date</label>
+                  <p>{booking.reservedDate}</p>
+                </div>
+                <div>
+                  <label className="text-sm text-gray-500">Time</label>
+                  <p>
+                    {formatTime(booking.startTime)}
+                    {booking.endTime && booking.endTime !== booking.startTime && 
+                      ` - ${formatTime(booking.endTime)}`
+                    }
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm text-gray-500">Expected Participants</label>
+                  <p>{booking.expectedParticipants}</p>
+                </div>
+                <div>
+                  <label className="text-sm text-gray-500">Hall Capacity</label>
+                  <p>{booking.hall?.capacity}</p>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm text-gray-500">Special Requirements</label>
+                <p className="text-gray-700">{booking.specialRequirements || 'None'}</p>
+              </div>
+
+              <div>
+                <label className="text-sm text-gray-500">Requested By</label>
+                <p>{booking.requestedBy?.username} (ID: {booking.requestedBy?.userId})</p>
+              </div>
+
+              <div>
+                <label className="text-sm text-gray-500">Hall Amenities</label>
+                <div className="flex gap-2 mt-1">
+                  {booking.hall?.hasProjector && (
+                    <span className="px-2 py-1 bg-gray-100 rounded text-xs">Projector</span>
+                  )}
+                  {booking.hall?.hasAc && (
+                    <span className="px-2 py-1 bg-gray-100 rounded text-xs">AC</span>
+                  )}
+                  {booking.hall?.hasWhiteboard && (
+                    <span className="px-2 py-1 bg-gray-100 rounded text-xs">Whiteboard</span>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
-          
-          <div className="space-y-2 border-t pt-4">
-            <p><strong>Booking ID:</strong> {booking.id}</p>
-            <p><strong>Hall:</strong> {booking.hall?.name}</p>
-            <p><strong>Location:</strong> {booking.hall?.location}</p>
-            <p><strong>Date:</strong> {booking.reservedDate}</p>
-            <p><strong>Start Time:</strong> {booking.startTime}</p>
-            {booking.endTime && <p><strong>End Time:</strong> {booking.endTime}</p>}
-            <p><strong>Expected Participants:</strong> {booking.expectedParticipants}</p>
-            <p><strong>Special Requirements:</strong> {booking.specialRequirements || 'None'}</p>
-            <p><strong>Created At:</strong> {new Date(booking.createdAt).toLocaleString()}</p>
-          </div>
-          
-          <div className="mt-6 flex gap-3">
-            <button
-              onClick={() => router.push('/bookings')}
-              className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
-            >
-              Back
-            </button>
-            <button
-              onClick={() => router.push(`/bookings/edit/${booking.id}`)}
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-            >
-              Edit
-            </button>
-            {!verified ? (
+
+          <div className="bg-gray-50 px-6 py-4 border-t">
+            <div className="flex gap-3">
               <button
-                onClick={() => handleStatusUpdate(true)}
-                disabled={updating}
-                className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 disabled:opacity-50"
+                onClick={() => router.push('/bookings')}
+                className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
               >
-                {updating ? 'Updating...' : 'Verify Booking'}
+                Back to List
               </button>
-            ) : (
               <button
-                onClick={() => handleStatusUpdate(false)}
-                disabled={updating}
-                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 disabled:opacity-50"
+                onClick={() => router.push(`/bookings/edit/${booking.id}`)}
+                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
               >
-                {updating ? 'Updating...' : 'Cancel Booking'}
+                Edit Booking
               </button>
-            )}
+              {!isVerified ? (
+                <button
+                  onClick={() => handleStatusUpdate(true)}
+                  disabled={updating}
+                  className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
+                >
+                  {updating ? 'Updating...' : 'Verify Booking'}
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleStatusUpdate(false)}
+                  disabled={updating}
+                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
+                >
+                  {updating ? 'Updating...' : 'Cancel Booking'}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>

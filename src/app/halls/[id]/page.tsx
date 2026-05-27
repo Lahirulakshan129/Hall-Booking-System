@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import Navbar from '@/components/Layout/Navbar';
-import { useHall } from '@/hooks/useHall';
-import { useAuth } from '@/contexts/AuthContext';
-import { Hall } from '@/types';
+import Navbar from '../../components/layout/Navbar';
+import { useHall } from '../../hooks/useHall';
+import { useAuth } from '../../context/authContex';
+import { Hall } from '../../types';
 
 export default function HallDetailsPage() {
   const { id } = useParams();
